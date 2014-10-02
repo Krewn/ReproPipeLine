@@ -1,0 +1,352 @@
+###########################################################    ____                   ______ _      _     _     
+##   Author : Kevin Nelson                             ####  / ____|                 |  ____(_)    | |   | |    
+#					                ### | |  __  ___ _ __   ___  | |__   _  ___| | __| |___ 
+##Projecting gene Fields into principal Component space#### | | |_ |/ _ \ '_ \ / _ \ |  __| | |/ _ \ |/ _` / __|
+########################################################### | |__| |  __/ | | |  __/ | |    | |  __/ | (_| \__ \
+###########################################################  \_____|\___|_| |_|\___| |_|    |_|\___|_|\__,_|___/    
+
+import os
+import numpy as np
+import sys
+import mdp
+import csv
+import thread
+import time
+
+n = 48
+has = 0		
+needs = 0
+lle=True
+
+def is_number(s):
+	try:
+		float(s)
+		return True
+	except ValueError:
+		return False
+
+def boolienize(data):
+	BData={}
+	n=0
+	for k in range(0,len(data),1):					#boolienize Data
+		row=[]
+		for p in data[k]:
+			if(is_number(p)):
+				if(float(p)>0):
+					row.append(1)
+				else:
+					row.append(0)
+			else:
+				row.append(p)
+		BData[k]=row
+	return BData
+
+def clip(D):
+	BM96={}
+	n=0
+	b=12
+	while(is_number(D[b][2])):
+		b+=1
+	for k in range(11,b):
+		row=[]
+		for p in range (1,98,1):
+			if(is_number(D[k][p])):
+				if(float(D[k][p])>0 and float(D[k][p])!=999):
+					row.append(float(D[k][p]))
+				else:
+					row.append(0)
+			else:
+				row.append(D[k][p])
+		BM96[k-11]=row
+	return BM96
+
+def readFileC(n):
+	try:
+		fileIN=sys.argv[n]						#This is only a kosher tactic if you don't name your files numerically
+	except(TypeError):
+		fileIN=n
+	Data={}
+	with open(fileIN) as csvfile:
+		tableMain=csv.reader(csvfile,delimiter=',')
+		k=0
+		for row in tableMain:
+			Data[k]=row
+			k+=1							#Read the Data into dict Data
+	return(Data)
+
+def readFiles():
+	Data={}
+	files = [f for f in os.listdir('.') if os.path.isfile(f)]
+	print '1.1 - ReadingFiles:'
+	for f in files:
+		if f[0]=='_':
+			Data[f]=boolienize(clip(readFileC(f)))			#Mark files for input with "_" as the first charactor in their name
+	return Data
+def FindMin(a):
+	Min=None
+	for k in a:
+		Min = k if(k < Min or Min is None)else Min
+	return Min
+
+def FindMax(a):
+	Max=None
+	for k in a:
+		Max = k if(k > Max or Max is None)else Max
+	return Max
+
+def EucAB(a,b):
+	dist=0.
+	if(len(a)!=len(b)):raise ValueError('Vectors are not of similar dimensionality.')
+	for k in range(0,len(a)):
+		dist+=(a[k]-b[k])**2
+	dist=dist**0.5
+	return(dist)
+
+def PCA(data):
+	NBD=np.zeros((len(data)-1,len(data[0])-1))
+	for k in range(1,len(data),1):
+		row=[]
+		for k1 in range(1,len(data[0]),1):
+			if(is_number(data[k][k1])):
+				row.append(float(data[k][k1]))
+		NBD[k-1]=row
+	pca=mdp.pca(NBD,svd=True)
+	return pca
+
+def octPrt(sdmB,name):
+	op=name+'=['
+	for k in sdmB:
+		if(op[len(op)-1]==','):op=op[0:len(op)-1]+';'
+		for k2 in sdmB[k]:
+			op += str(sdmB[k][k2])
+			op += ','
+	if(op[len(op)-1]==','):op=op[0:len(op)-1]+';'
+	op+=']\n'
+	return(op)
+
+def octPrts(array4d):
+	s=""
+	for k in array4d:
+		for k2 in array4d[k]:
+			temp = str(k)[0:len(str(k))-4]
+			s+=octPrt(array4d[k][k2],temp+"_"+k2)
+	return(s)
+#def RPrt(sdmB,name):
+#	op=name+' <- data.frame(matrix(ncol = ' len(sdmB) ', nrow = ' len(sdmB[0]) '))'
+#	for k in sdmB:
+#		if(op[len(op)-1]==','):op=op[0:len(op)-1]+';'					##NEED WORK##
+#		for k2 in sdmB[k]:									#//TODO
+#			op += str(sdmB[k][k2])
+#			op += ','
+#	if(op[len(op)-1]==','):op=op[0:len(op)-1]+';'
+#	op+=']\n'
+#	return(op)
+
+#def RPrts(array4d):
+#	s=""
+#	for k in array4d:
+#		for k2 in array4d[k]:
+#			temp = str(k)[0:len(str(k))-4]
+#			s+=octPrt(array4d[k][k2],temp+"_"+k2)
+#	return(s)
+	
+def geneFields(Data):
+	global has
+	global needs
+	PCAs={}
+	Util={}
+	GeneFields={}
+	distTable={}
+	for f in Data:
+		distTable[f]={}
+		PCAs[f]=PCA(Data[f])
+		Util[f]={}
+		Util[f]['Pc1Min']=FindMin(PCAs[f][0:len(PCAs[f])][0])
+		Util[f]['Pc1Max']=FindMax(PCAs[f][0:len(PCAs[f])][0])
+		Util[f]['Pc2Min']=FindMin(PCAs[f][0:len(PCAs[f])][1])
+		Util[f]['Pc2Max']=FindMax(PCAs[f][0:len(PCAs[f])][1])
+		Util[f]['Pc1TestPoints']=np.zeros(n+1)
+		Util[f]['Pc2TestPoints']=np.zeros(n+1)
+		temp=(Util[f]['Pc1Max']-Util[f]['Pc1Min']+2)/n								#Makes test points with a buffer on each side of the data.
+		for k in range(0,n+1):
+			Util[f]['Pc1TestPoints'][k]=Util[f]['Pc1Min']-1.+k*temp
+		temp=(Util[f]['Pc2Max']-Util[f]['Pc2Min']+2)/n
+		for k in range(0,n+1):
+			Util[f]['Pc2TestPoints'][k]=Util[f]['Pc1Min']-1.+k*temp
+		
+		GeneFields[f]={}
+		eucABC(f,Util,Data,PCAs,distTable)
+		for k0 in range (1,len(Data[f][0])):									#for each gene
+			g = Data[f][0][k0]
+			print (f + " : " + g)
+			GeneFields[f][g]={}
+			##Def
+			if(lle):		
+				thread.start_new_thread(makeField,(Data,f,g,Util,PCAs,k0,GeneFields,distTable))
+				needs=needs+1
+			else:	
+				_k=0
+				for k in Util[f]['Pc1TestPoints']:
+					GeneFields[f][g][_k]={}
+					_k2=0
+					for k2 in Util[f]['Pc2TestPoints']:							#for each pair of test points
+						top=0.
+						bottom=0.
+						for k3 in range(1,len(Data[f])):						#for each sample
+							temp = EucAB([k,k2],[PCAs[f][k3-1][0] , PCAs[f][k3-1][1]])
+							top+=Data[f][k3][k0]/temp
+							bottom+=1/temp
+						GeneFields[f][g][_k][_k2]=top/bottom
+						_k2=_k2+1
+					_k=_k+1
+	was=-1
+	while(has<needs):
+		time.sleep(1)
+		#print str(has)+"/"+str(needs)
+		if(was!=has):
+			print str(has)+"/"+str(needs)
+			was=has
+	return(GeneFields)
+
+def makeField(Data,f,g,Util,PCAs,k0,GeneFields,distTable):
+	_k=0
+	for k in Util[f]['Pc1TestPoints']:
+		GeneFields[f][g][_k]={}
+		_k2=0	
+		for k2 in Util[f]['Pc2TestPoints']:							#for each pair of test points
+			top=0.
+			bottom=0.
+			for k3 in range(1,len(Data[f])):						#for each sample
+				top+=Data[f][k3][k0]/distTable[f][k][k2][k3]**1
+				bottom+=distTable[f][k][k2][k3]**-1
+				GeneFields[f][g][_k][_k2]=top/bottom
+			_k2=_k2+1
+		_k=_k+1
+	global has
+	has=has+1
+	pass
+
+def geneFields2(Data,ids,uids):
+	global has
+	global needs
+	PCAs={}
+	Util={}
+	distTable={}
+	GeneFields={}
+	for f in Data:
+		distTable[f]={}
+		PCAs[f]=PCA(Data[f])
+		Util[f]={}
+		Util[f]['Pc1Min']=FindMin(PCAs[f][0:len(PCAs[f])][0])
+		Util[f]['Pc1Max']=FindMax(PCAs[f][0:len(PCAs[f])][0])
+		Util[f]['Pc2Min']=FindMin(PCAs[f][0:len(PCAs[f])][1])
+		Util[f]['Pc2Max']=FindMax(PCAs[f][0:len(PCAs[f])][1])
+		Util[f]['Pc1TestPoints']=np.zeros(n+1)
+		Util[f]['Pc2TestPoints']=np.zeros(n+1)
+		temp=(Util[f]['Pc1Max']-Util[f]['Pc1Min']+2)/n								#Makes test points with a buffer on each side of the data.
+		for k in range(0,n+1):
+			Util[f]['Pc1TestPoints'][k]=Util[f]['Pc1Min']-1.+k*temp
+		temp=(Util[f]['Pc2Max']-Util[f]['Pc2Min']+2)/n
+		for k in range(0,n+1):
+			Util[f]['Pc2TestPoints'][k]=Util[f]['Pc1Min']-1.+k*temp
+		
+		GeneFields[f]={}
+		eucABC(f,Util,Data,PCAs,distTable)
+		for k0 in range (1,len(Data[f][0])):									#for each gene
+			g = Data[f][0][k0]
+			print (f + " : " + g)
+			GeneFields[f][g]={}
+			##Def
+			if(lle):		
+				thread.start_new_thread(makeField2,(Data,f,g,Util,PCAs,k0,GeneFields,ids,uids,distTable))
+				needs=needs+1
+			else:	
+				_k=0
+				for k4 in uids:
+					GeneFields[f][g][k4]={}
+					for k in Util[f]['Pc1TestPoints']:
+						GeneFields[f][g][k4][_k]={}
+						_k2=0	
+						for k2 in Util[f]['Pc2TestPoints']:							#for each pair of test points
+							top=0.
+							bottom=0.
+							for k3 in range(1,len(Data[f])):						#for each sample
+								#print(ids[k3])
+								#print(k0)
+								#print('_________')
+								if(ids[k3]==k4):
+									temp = EucAB([k,k2],[PCAs[f][k3-1][0] , PCAs[f][k3-1][1]])
+									top+=Data[f][k3][k0]/temp
+									bottom+=1/temp
+							GeneFields[f][g][k4][_k][_k2]=top/bottom
+							_k2=_k2+1
+						_k=_k+1
+	was=-1
+	while(has<needs):
+		time.sleep(1)
+		#print str(has)+"/"+str(needs)
+		if(was!=has):
+			print str(has)+"/"+str(needs)
+			was=has
+	return(GeneFields)
+
+def eucABC(f,Util,Data,PCAs,distTable):
+	for k in Util[f]['Pc1TestPoints']:
+			distTable[f][k]={}
+			_k2=0	
+			for k2 in Util[f]['Pc2TestPoints']:							#for each pair of test points
+				distTable[f][k][k2]={}
+				top=0.
+				bottom=0.
+				for k3 in range(1,len(Data[f])):						#for each sample
+					distTable[f][k][k2][k3] = EucAB([k,k2],[PCAs[f][k3-1][0] , PCAs[f][k3-1][1]])
+	pass
+
+
+def makeField2(Data,f,g,Util,PCAs,k0,GeneFields,ids,uids,distTable):
+	_k=0
+	for k4 in uids:
+		GeneFields[f][g][k4]={}
+		for k in Util[f]['Pc1TestPoints']:
+			GeneFields[f][g][k4][_k]={}
+			_k2=0	
+			for k2 in Util[f]['Pc2TestPoints']:							#for each pair of test points
+				top=0.
+				bottom=0.
+				for k3 in range(1,len(Data[f])):						#for each sample
+					#print(ids[k3])
+					#print(k0)
+					#print('_________')
+					if(ids[k3]==k4):
+						#temp = EucAB([k,k2],[PCAs[f][k3-1][0] , PCAs[f][k3-1][1]])
+						top+=Data[f][k3][k0]/distTable[f][k][k2][k3]**1
+						bottom+=distTable[f][k][k2][k3]**-1
+				GeneFields[f][g][k4][_k][_k2]=top/bottom
+				_k2=_k2+1
+			_k=_k+1
+	global has
+	has=has+1
+	pass
+
+
+def doEverything0():
+	output=open("geneFields.m","w")
+	output.write(octPrts(geneFields(readFiles())))
+	output.close()
+
+def doEverything1(data,ids,uids):
+	return(geneFields2(data,ids,uids))
+
+def doEverything2(data):
+	output=open("geneFields.m","w")
+	output.write(octPrts(geneFields(data)))
+	output.close()
+
+
+#print "importsComplete"
+#doEverything0()
+															# ________       ____        __#
+															#/_  __/ /  ___ / __/__  ___/ /#
+															# / / / _ \/ -_) _// _ \/ _  / #
+															#/_/ /_//_/\__/___/_//_/\_,_/  #
+

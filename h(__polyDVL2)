@@ -1,0 +1,28 @@
+Variables in the current scope:
+
+_OAC1_SMARCC2       __poly_FGF2         __poly_LOX          __poly_SMARCC2
+__poly_APOE         __poly_FOSB         __poly_LRRN1        __poly_SNAI2
+__poly_CBX7         __poly_FOXD1        __poly_LUM          __poly_SOX13
+__poly_CCND1        __poly_GABRB3       __poly_MASP1        __poly_SOX2
+__poly_CCR7         __poly_GAL          __poly_MBD3         __poly_SP1
+__poly_CD3D         __poly_GAPDH        __poly_MYC          __poly_STAT3
+__poly_CD4          __poly_GDF3         __poly_MyoD1        __poly_STEMCCA_P2A
+__poly_CD44         __poly_GREM1        __poly_NACC1        __poly_Sox1
+__poly_CD48         __poly_Gata6        __poly_NANOG        __poly_T
+__poly_CDH1         __poly_HDAC2        __poly_NODAL        __poly_TCF3
+__poly_CDH2_NCAD    __poly_HESX1        __poly_NR0B1_DAX1   __poly_TCL1A
+__poly_CDKN1A       __poly_HNF4A        __poly_OTX2         __poly_TDGF1
+__poly_COL3A1       __poly_JARID2       __poly_PHC1         __poly_TET2
+__poly_DNMT3B       __poly_JMJD2B       __poly_POU5F1       __poly_TGFBR2
+__poly_DNMT3L       __poly_JMJD3        __poly_PRDM14       __poly_TRIM28
+__poly_DPPA2        __poly_KAT7_Myst    __poly_PTPN6        __poly_Tet1
+__poly_DPPA4        __poly_KDM5A        __poly_REST         __poly_USP16
+__poly_DUSP10       __poly_KDR          __poly_RIF1         __poly_UTF1
+__poly_DVL2         __poly_KLF4         __poly_RNF2         __poly_Wnt3
+__poly_EED          __poly_KLF5         __poly_SALL1        __poly_ZFP42_REX1
+__poly_ESRRB        __poly_LATS2        __poly_SALL4        __poly_ZIC3
+__poly_ETV5         __poly_LCK          __poly_SEMA6A       __poly_ZNF281
+__poly_EZH2         __poly_LEFTY1       __poly_SET          ans
+__poly_Eomes        __poly_LEFTY2       __poly_SETD1A
+__poly_FBXO15       __poly_LIN28A       __poly_SMAD4
+
