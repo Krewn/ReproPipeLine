@@ -121,7 +121,7 @@ def octPrt(sdmB,name):
 			op += str(sdmB[k][k2])
 			op += ','
 	if(op[len(op)-1]==','):op=op[0:len(op)-1]+';'
-	op+=']\n'
+	op+='];\n'
 	return(op)
 
 def octPrts(array4d):
@@ -163,8 +163,8 @@ def geneFields(Data):
 		Util[f]={}
 		Util[f]['Pc1Min']=FindMin(PCAs[f][0:len(PCAs[f])][0])
 		Util[f]['Pc1Max']=FindMax(PCAs[f][0:len(PCAs[f])][0])
-		Util[f]['Pc2Min']=FindMin(PCAs[f][0:len(PCAs[f])][1])
-		Util[f]['Pc2Max']=FindMax(PCAs[f][0:len(PCAs[f])][1])
+		Util[f]['Pc2Min']=FindMin(PCAs[f][0:len(PCAs[f])][2])
+		Util[f]['Pc2Max']=FindMax(PCAs[f][0:len(PCAs[f])][2])
 		Util[f]['Pc1TestPoints']=np.zeros(n+1)
 		Util[f]['Pc2TestPoints']=np.zeros(n+1)
 		temp=(Util[f]['Pc1Max']-Util[f]['Pc1Min']+2)/n								#Makes test points with a buffer on each side of the data.
@@ -239,8 +239,8 @@ def geneFields2(Data,ids,uids):
 		Util[f]={}
 		Util[f]['Pc1Min']=FindMin(PCAs[f][0:len(PCAs[f])][0])
 		Util[f]['Pc1Max']=FindMax(PCAs[f][0:len(PCAs[f])][0])
-		Util[f]['Pc2Min']=FindMin(PCAs[f][0:len(PCAs[f])][1])
-		Util[f]['Pc2Max']=FindMax(PCAs[f][0:len(PCAs[f])][1])
+		Util[f]['Pc2Min']=FindMin(PCAs[f][0:len(PCAs[f])][2])
+		Util[f]['Pc2Max']=FindMax(PCAs[f][0:len(PCAs[f])][2])
 		Util[f]['Pc1TestPoints']=np.zeros(n+1)
 		Util[f]['Pc2TestPoints']=np.zeros(n+1)
 		temp=(Util[f]['Pc1Max']-Util[f]['Pc1Min']+2)/n								#Makes test points with a buffer on each side of the data.
@@ -275,7 +275,7 @@ def geneFields2(Data,ids,uids):
 								#print(k0)
 								#print('_________')
 								if(ids[k3]==k4):
-									temp = EucAB([k,k2],[PCAs[f][k3-1][0] , PCAs[f][k3-1][1]])
+									temp = EucAB([k,k2],[PCAs[f][k3-1][0] , PCAs[f][k3-1][2]])
 									top+=Data[f][k3][k0]/temp
 									bottom+=1/temp
 							GeneFields[f][g][k4][_k][_k2]=top/bottom
@@ -299,7 +299,7 @@ def eucABC(f,Util,Data,PCAs,distTable):
 				top=0.
 				bottom=0.
 				for k3 in range(1,len(Data[f])):						#for each sample
-					distTable[f][k][k2][k3] = EucAB([k,k2],[PCAs[f][k3-1][0] , PCAs[f][k3-1][1]])
+					distTable[f][k][k2][k3] = EucAB([k,k2],[PCAs[f][k3-1][0] , PCAs[f][k3-1][2]])
 	pass
 
 
